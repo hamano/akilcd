@@ -11,19 +11,18 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=akilcd
 PKG_RELEASE:=1
-PKG_VERSION:=1.0
+PKG_VERSION:=1.1
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/akilcd
   SECTION:=utils
   CATEGORY:=Utilities
-  TITLE:=Tool for controlling Akizuki LCD device
-#  DEPENDS:=@GPIO_SUPPORT
+  TITLE:=Akizuki Graphic LCD
 endef
 
 define Package/akilcd/description
-	Tool for controlling Akizuki LCD device
+	Tool for controlling Akizuki Graphic LCD
 endef
 
 define Build/Prepare

@@ -26,7 +26,7 @@
 
 #define BUF_SIZE 256
 
-static char lcdbuf[4][20];
+static char lcdbuf[4][21];
 static int lcdpos = 0;
 
 void lcd_write(int fd, char *buf, size_t len)
@@ -44,31 +44,41 @@ void lcd_clear(int fd)
     int ret;
     lcd_write(fd, "\033E00\r", 5);
     ret = read(fd, &c, 1);
-    printf("clear ret: %d, c: %c\n", ret, c);
+    //printf("clear ret: %d, c: %c\n", ret, c);
 }
 
-void lcd_print(int fd, char *buf)
+void lcd_print(int fd, const char *buf)
 {
-    int i, j;
+    int i;
     size_t len;
-    len = strlen(buf);
 
+    len = strlen(buf);
     for(i=0; i<len; i+=20){
-        for(j=len; j<=i+20; j++){
-            buf[j]='\0';
-        }
-        memcpy(lcdbuf[lcdpos++], buf+i, 20);
+        strncpy(lcdbuf[lcdpos++], buf + i, 20);
         if(lcdpos >= 4){
             lcdpos = 0;
         }
     }
 }
 
+void lcd_pos(int fd, int y)
+{
+    char c;
+    int ret;
+    char cmd[8];
+    snprintf(cmd, 8, "\033N000%c\r", '0' + y);
+    lcd_write(fd, cmd, 7);
+    ret = read(fd, &c, 1);
+    //printf("pos ret: %d, c: %c\n", ret, c);
+}
+
 void lcd_flush(int fd)
 {
     int i;
     for(i=0; i<4; i++){
+        lcd_pos(fd, i);
         lcd_write(fd, lcdbuf[(lcdpos+i)%4], 20);
+        //printf("%s\n", lcdbuf[(lcdpos+i)%4]);
     }
 }
 
@@ -83,7 +93,7 @@ int main(int argc, char *argv[]){
         return EXIT_FAILURE;
     }
     dev = argv[1];
-    printf("opening %s\n", dev);
+    //printf("opening %s\n", dev);
     fd = open(dev, O_RDWR | O_SYNC);
     if(fd < 0){
         fprintf(stderr, "cannot open device\n");
@@ -95,14 +105,12 @@ int main(int argc, char *argv[]){
     cfmakeraw(&term);
     tcsetattr(fd, TCSANOW, &term);
     tcflush(fd, TCIOFLUSH);
-
     lcd_clear(fd);
 
     while(fgets(buf, BUF_SIZE - 1, stdin)){
         lcd_print(fd, buf);
         lcd_flush(fd);
     }
-
     close(fd);
     return EXIT_SUCCESS;
 }
